@@ -12,13 +12,14 @@ import BaseHTTPServer
 import CGIHTTPServer
 
 import SocketServer
+from util import mountDirs
 
 __version__ = "$Revision$"
 
 import monitor
 monitor.start(interval=1.0)
 
-DOCUMENT_ROOT = "/www"
+DOCUMENT_ROOT = ["/www"]
 
 import re
 ##REWRITE_RULES = [('^/framework(/)?', r'/cgi-bin/photos.cgi?path=/')]
@@ -90,8 +91,13 @@ class HTTPRequestHandler(CGIHTTPServer.CGIHTTPRequestHandler):
         return CGIHTTPServer.CGIHTTPRequestHandler.do_GET(self)
 
     def translate_path(self, path):
-        path = DOCUMENT_ROOT + path
-        return CGIHTTPServer.CGIHTTPRequestHandler.translate_path(self, path)
+        for r in DOCUMENT_ROOT:
+            os.chdir(os.path.dirname(r))
+            testpath = r + path
+            translated = CGIHTTPServer.CGIHTTPRequestHandler.translate_path(self, testpath)
+            if os.path.exists(translated):
+                return translated
+        return translated 
         
     def run_cgi(self):
         """Execute a CGI script."""
@@ -229,11 +235,13 @@ class HTTPRequestHandler(CGIHTTPServer.CGIHTTPRequestHandler):
                         sys.argv.append(decoded_query)
                     sys.stdout = self.wfile
                     sys.stdin = self.rfile
-                    execfile(scriptfile, {"__name__": "__main__", "__file__": scriptfile}, locals())
+                    os.chdir(os.path.dirname(scriptfile))
+                    execfile(scriptfile, {"sys": sys, "__name__": "__main__", "__file__": scriptfile}, {})
                 except:
                     print "<html><a name='exception'></a><pre>\n"
                     traceback.print_exc(file=self.wfile)
-                    print "</pre><script>\nwindow.location.href = '#exception';\n</script></html>"                    
+                    print "</pre><script>\nwindow.location.href = '#exception';\n</script></html>"
+                    print sys.path
                 finally:
                     sys.argv = save_argv
                     sys.stdin = save_stdin
@@ -273,15 +281,16 @@ favicon = zlib.decompress(
 class HTTPServer(BaseHTTPServer.HTTPServer):
     pass
 
-def test(HandlerClass=HTTPRequestHandler, ServerClass=HTTPServer, port=8000, root='/www'):
+def test(HandlerClass=HTTPRequestHandler, ServerClass=HTTPServer, port=8000, root=['/www','.tmp']):
     global DOCUMENT_ROOT
-    DOCUMENT_ROOT = os.path.realpath(root)
-    os.chdir(os.path.dirname(DOCUMENT_ROOT))
+    DOCUMENT_ROOT = [os.path.realpath(r) for r in root]
+    mountDirs(*DOCUMENT_ROOT)
+    ##os.chdir(os.path.dirname(DOCUMENT_ROOT))
     server_address = ('', port)
     httpd = ServerClass(server_address, HandlerClass)
     sa = httpd.socket.getsockname()
-    print "Serving", DOCUMENT_ROOT, "on", sa[0], "port", sa[1], "..."
+    print "Serving", ', '.join(DOCUMENT_ROOT), "on", sa[0], "port", sa[1], "..."
     httpd.serve_forever()
 
 if __name__ == '__main__':
-    test(port=int(sys.argv[1]), root=sys.argv[2])
+    test(port=int(sys.argv[1]), root=sys.argv[2:])
