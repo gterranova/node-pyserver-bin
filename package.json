@@ -46,6 +46,10 @@
   ],
   "readme": "# node-pyserver-bin \r\n\r\n[pyserver](http://pyserver.sourceforge.net) 0.1.0 Node.js wrapper that makes a basic python server seamlessly available as a local dependency.\r\n\r\n> pyserver is python webserver for locally testing and running cgi application written in python.\r\n\r\n## Install\r\n\r\nInstall with [npm](https://npmjs.org/package/pyserver-bin): `npm install --save pyserver-bin`\r\n\r\n\r\n## Example usage\r\n\r\n```js\r\nvar execFile = require('child_process').execFile;\r\nvar pyserverPath = require('pyserver-bin').path;\r\n\r\nexecFile(pyserverPath, ['-v'], function(err, stdout, stderr) {\r\n    console.log('pyserver running');\r\n});\r\n```\r\n\r\nCan also be run directly from `./node_modules/.bin/pyserver`.\r\n\r\n\r\n## License\r\n\r\nEverything licensed under the [BSD license](http://opensource.org/licenses/bsd-license.php)  and copyright Gianpaolo Terranova.\r\n",
   "readmeFilename": "readme.md",
-  "_id": "pyserver-bin@0.1.0",
-  "_from": "pyserver-bin@~0.1.0"
+  "_id": "node-pyserver-bin@0.1.0",
+  "_from": "pyserver-bin@~0.1.0",
+  "dist": {
+    "shasum": "bb2059f7a95ad39110426660370006cfda4d90c3"
+  },
+  "_resolved": "git+ssh://git@github.com:gterranova/node-pyserver-bin.git#e2ac4227088ab4427b9e8a33d9c5f8478bbba7b1"
 }

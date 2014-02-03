@@ -217,7 +217,7 @@ class HTTPRequestHandler(CGIHTTPServer.CGIHTTPRequestHandler):
             env.setdefault(k, "")
         os.environ.update(env)
 
-        self.send_response(200, "Script output follows")
+        ##self.send_response(200, "Script output follows")
 
         decoded_query = query.replace('+', ' ')
         
@@ -238,10 +238,10 @@ class HTTPRequestHandler(CGIHTTPServer.CGIHTTPRequestHandler):
                     os.chdir(os.path.dirname(scriptfile))
                     execfile(scriptfile, {"sys": sys, "__name__": "__main__", "__file__": scriptfile}, {})
                 except:
-                    print "<html><a name='exception'></a><pre>\n"
-                    traceback.print_exc(file=self.wfile)
-                    print "</pre><script>\nwindow.location.href = '#exception';\n</script></html>"
-                    print sys.path
+                    self.send_response(200, "Error log follows")
+                    print "Content-type: text/plain\r\nConnection: keep-alive\r\n\r\n"
+                    traceback.print_exc() ##file=self.wfile)
+
                 finally:
                     sys.argv = save_argv
                     sys.stdin = save_stdin
@@ -284,6 +284,7 @@ class HTTPServer(BaseHTTPServer.HTTPServer):
 def test(HandlerClass=HTTPRequestHandler, ServerClass=HTTPServer, port=8000, root=['/www','.tmp']):
     global DOCUMENT_ROOT
     DOCUMENT_ROOT = [os.path.realpath(r) for r in root]
+    print repr(root)
     mountDirs(*DOCUMENT_ROOT)
     ##os.chdir(os.path.dirname(DOCUMENT_ROOT))
     server_address = ('', port)
