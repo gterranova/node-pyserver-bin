@@ -35,25 +35,22 @@ class HTTPRequestHandler(CGIHTTPServer.CGIHTTPRequestHandler):
         return True
 
     def do_OPTIONS(self):        
-        ret = self.do_GET()
         env = {}
         env['REQUEST_METHOD'] = 'OPTIONS'
         os.environ.update(env)
-        return ret        
+        return self.do_GET()
 
     def do_PUT(self):        
-        ret = self.do_POST()
         env = {}
         env['REQUEST_METHOD'] = 'PUT'
         os.environ.update(env)
-        return ret        
+        return self.do_POST()
 
     def do_DELETE(self):        
-        ret = self.do_GET()
         env = {}
         env['REQUEST_METHOD'] = 'DELETE'
         os.environ.update(env)
-        return ret        
+        return self.do_GET()
         
     def do_POST(self):
         env = {}
@@ -203,19 +200,27 @@ class HTTPRequestHandler(CGIHTTPServer.CGIHTTPRequestHandler):
             else:
                 accept = accept + line[7:].split(',')
         env['HTTP_ACCEPT'] = ','.join(accept)
+        encoding = self.headers.getheader('accept-encoding')
+        if encoding:
+            env['HTTP_ACCEPT_ENCODING'] = encoding
         ua = self.headers.getheader('user-agent')
         if ua:
             env['HTTP_USER_AGENT'] = ua
         co = filter(None, self.headers.getheaders('cookie'))
         if co:
             env['HTTP_COOKIE'] = ', '.join(co)
+        etag = self.headers.getheader('if-none-match')
+        if etag:
+            env['HTTP_IF_NONE_MATCH'] = etag            
         # XXX Other HTTP_* headers
         # Since we're setting the env in the parent, provide empty
         # values to override previously set values
         for k in ('QUERY_STRING', 'REMOTE_HOST', 'CONTENT_LENGTH',
                   'HTTP_USER_AGENT', 'HTTP_COOKIE'):
             env.setdefault(k, "")
+        ##old_env = os.environ
         os.environ.update(env)
+        ## TO AVOID: os.environ = env
 
         ##self.send_response(200, "Script output follows")
 
@@ -248,6 +253,7 @@ class HTTPRequestHandler(CGIHTTPServer.CGIHTTPRequestHandler):
                     sys.stdout = save_stdout
                     sys.stderr = save_stderr
                     os.chdir(save_cwd)
+                    ##os.environ = old_env
             except SystemExit, sts:
                 self.log_error("CGI script exit status %s", str(sts))
             else:
