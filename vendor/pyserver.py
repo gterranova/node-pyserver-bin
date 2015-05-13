@@ -78,6 +78,11 @@ class HTTPRequestHandler(CGIHTTPServer.CGIHTTPRequestHandler):
                 self.path = p.sub(dst,self.path)
                 break
         
+        for r in DOCUMENT_ROOT:
+            testpath = os.path.join(r, self.path)
+            if os.path.exists(testpath):
+                os.chdir(os.path.dirname(testpath))
+        
         if self.use_favicon and self.path == '/favicon.ico':
             self.send_response(200)
             self.send_header("Content-type", 'image/x-icon')
@@ -218,6 +223,11 @@ class HTTPRequestHandler(CGIHTTPServer.CGIHTTPRequestHandler):
         for k in ('QUERY_STRING', 'REMOTE_HOST', 'CONTENT_LENGTH',
                   'HTTP_USER_AGENT', 'HTTP_COOKIE'):
             env.setdefault(k, "")
+        authtoken = self.headers.getheader('x-authtoken')
+        if authtoken:
+            print authtoken
+            env['HTTP_X_AUTHTOKEN'] = authtoken
+            
         ##old_env = os.environ
         os.environ.update(env)
         ## TO AVOID: os.environ = env
